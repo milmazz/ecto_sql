@@ -1460,6 +1460,16 @@ defmodule Ecto.Adapters.TdsTest do
            ]
   end
 
+  test "create table ignores :align_columns" do
+    columns = [
+      {:add, :flag, :boolean, []},
+      {:add, :count, :bigint, []}
+    ]
+
+    assert execute_ddl({:create, table(:posts, align_columns: :compact), columns}) ==
+             execute_ddl({:create, table(:posts), columns})
+  end
+
   test "create table with prefix" do
     create =
       {:create, table(:posts, prefix: "foo"),

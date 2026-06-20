@@ -1701,6 +1701,16 @@ defmodule Ecto.Adapters.MyXQLTest do
            ]
   end
 
+  test "create table ignores :align_columns" do
+    columns = [
+      {:add, :flag, :boolean, []},
+      {:add, :count, :bigint, []}
+    ]
+
+    assert execute_ddl({:create, table(:posts, align_columns: :compact), columns}) ==
+             execute_ddl({:create, table(:posts), columns})
+  end
+
   test "create empty table" do
     create = {:create, table(:posts), []}
 
