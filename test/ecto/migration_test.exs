@@ -49,6 +49,11 @@ defmodule Ecto.MigrationTest do
     assert table(:posts, prefix: "foo") == %Table{name: "posts", primary_key: true, prefix: "foo"}
   end
 
+  test "table/2 accepts and stores :align_columns" do
+    assert table(:posts).align_columns == nil
+    assert table(:posts, align_columns: :compact).align_columns == :compact
+  end
+
   test "creates an index" do
     assert index(:posts, [:title]) ==
              %Index{table: "posts", unique: false, name: :posts_title_index, columns: [:title]}

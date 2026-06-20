@@ -487,7 +487,8 @@ defmodule Ecto.Migration do
               primary_key: true,
               engine: nil,
               options: nil,
-              modifiers: nil
+              modifiers: nil,
+              align_columns: nil
 
     @type t :: %__MODULE__{
             name: String.t(),
@@ -496,7 +497,8 @@ defmodule Ecto.Migration do
             primary_key: boolean | keyword(),
             engine: atom,
             options: String.t(),
-            modifiers: String.t() | nil
+            modifiers: String.t() | nil,
+            align_columns: nil | :compact
           }
   end
 
@@ -837,6 +839,13 @@ defmodule Ecto.Migration do
       table creation statement, between the tokens "CREATE" and "TABLE". For
       example, "UNLOGGED", "GLOBAL", "TEMPORARY", or "GLOBAL TEMPORARY" in
       PostgreSQL.
+    * `:align_columns` - PostgreSQL only. When set to `:compact`, the adapter
+      reorders the table's columns into a layout that minimizes alignment
+      padding bytes in the generated `CREATE TABLE` statement (largest fixed
+      alignment first, variable-length columns last, primary-key columns kept
+      first). The order written in the migration is left untouched; only the
+      emitted DDL changes. Defaults to `nil` (no reordering). Other adapters
+      ignore this option.
 
   """
   def table(name, opts \\ [])
