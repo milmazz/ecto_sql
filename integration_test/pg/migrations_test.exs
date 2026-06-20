@@ -40,6 +40,21 @@ defmodule Ecto.Integration.MigrationsTest do
     end
   end
 
+  defmodule AlignColumnsMigration do
+    use Ecto.Migration
+
+    def change do
+      create table(:align_columns_test, primary_key: false, align_columns: :compact) do
+        add :id, :bigserial, primary_key: true
+        add :flag, :boolean
+        add :age, :smallint
+        add :score, :bigint
+        add :views, :integer
+        add :body, :text
+      end
+    end
+  end
+
   collation = "POSIX"
   @collation collation
 
@@ -202,5 +217,22 @@ defmodule Ecto.Integration.MigrationsTest do
         } = Ecto.Adapters.SQL.query!(PoolRepo, query.(type), [])
       end
     end
+  end
+
+  test "align_columns: :compact stores columns in padding-optimized order" do
+    num = @base_migration + System.unique_integer([:positive])
+
+    assert :ok = Ecto.Migrator.up(PoolRepo, num, AlignColumnsMigration, log: false)
+
+    query = """
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_name = 'align_columns_test'
+    ORDER BY ordinal_position;
+    """
+
+    assert %{rows: rows} = Ecto.Adapters.SQL.query!(PoolRepo, query, [])
+
+    assert List.flatten(rows) == ~w(id score views age flag body)
   end
 end
