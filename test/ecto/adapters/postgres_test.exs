@@ -2137,6 +2137,75 @@ defmodule Ecto.Adapters.PostgresTest do
            ]
   end
 
+  test "create table align_columns: :compact reorders by alignment group" do
+    # written order mixes alignment classes; expected compact order is
+    # uuid(0), bigint(1), integer(2), smallint(3), then group-4 in written order
+    columns = [
+      {:add, :age, :smallint, []},
+      {:add, :ref, :uuid, []},
+      {:add, :tags, {:array, :string}, []},
+      {:add, :score, :bigint, []},
+      {:add, :views, :integer, []},
+      {:add, :active, :boolean, []}
+    ]
+
+    reordered = [
+      {:add, :ref, :uuid, []},
+      {:add, :score, :bigint, []},
+      {:add, :views, :integer, []},
+      {:add, :age, :smallint, []},
+      {:add, :tags, {:array, :string}, []},
+      {:add, :active, :boolean, []}
+    ]
+
+    assert execute_ddl({:create, table(:posts, align_columns: :compact), columns}) ==
+             execute_ddl({:create, table(:posts), reordered})
+  end
+
+  test "create table align_columns: nil keeps written column order" do
+    columns = [
+      {:add, :age, :smallint, []},
+      {:add, :score, :bigint, []}
+    ]
+
+    assert execute_ddl({:create, table(:posts, align_columns: nil), columns}) ==
+             execute_ddl({:create, table(:posts), columns})
+  end
+
+  test "create table align_columns: :compact pins composite primary key first" do
+    columns = [
+      {:add, :name, :string, []},
+      {:add, :a, :integer, [primary_key: true]},
+      {:add, :b, :integer, [primary_key: true]}
+    ]
+
+    reordered = [
+      {:add, :a, :integer, [primary_key: true]},
+      {:add, :b, :integer, [primary_key: true]},
+      {:add, :name, :string, []}
+    ]
+
+    assert execute_ddl({:create, table(:posts, align_columns: :compact), columns}) ==
+             execute_ddl({:create, table(:posts), reordered})
+  end
+
+  test "create table align_columns: :compact pins binary_id primary key ahead of other uuids" do
+    columns = [
+      {:add, :external_ref, :uuid, []},
+      {:add, :id, :binary_id, [primary_key: true]},
+      {:add, :count, :bigint, []}
+    ]
+
+    reordered = [
+      {:add, :id, :binary_id, [primary_key: true]},
+      {:add, :external_ref, :uuid, []},
+      {:add, :count, :bigint, []}
+    ]
+
+    assert execute_ddl({:create, table(:posts, align_columns: :compact), columns}) ==
+             execute_ddl({:create, table(:posts), reordered})
+  end
+
   test "create table with prefix" do
     create =
       {:create, table(:posts, prefix: "foo"),

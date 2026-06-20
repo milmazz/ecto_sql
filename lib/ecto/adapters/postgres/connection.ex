@@ -1264,6 +1264,7 @@ if Code.ensure_loaded?(Postgrex) do
     @impl true
     def execute_ddl({command, %Table{} = table, columns}) when command in @creates do
       table_name = quote_name(table.prefix, table.name)
+      columns = reorder_columns(columns, table.align_columns)
 
       query = [
         "CREATE ",
@@ -1450,6 +1451,42 @@ if Code.ensure_loaded?(Postgrex) do
     defp ddl_log_level("FATAL"), do: :error
     defp ddl_log_level("PANIC"), do: :error
     defp ddl_log_level(_severity), do: :info
+
+    defp reorder_columns(columns, nil), do: columns
+
+    defp reorder_columns(columns, :compact) do
+      {pk_columns, rest} =
+        Enum.split_with(columns, fn {_action, _name, _type, opts} -> opts[:primary_key] end)
+
+      pk_columns ++ Enum.sort_by(rest, &alignment_group/1)
+    end
+
+    defp alignment_group({_action, _name, type, _opts}), do: alignment_group_for_type(type)
+
+    defp alignment_group_for_type(type) when type in [:uuid, :binary_id], do: 0
+
+    defp alignment_group_for_type(type)
+         when type in [
+                :bigint,
+                :bigserial,
+                :identity,
+                :float,
+                :money,
+                :time,
+                :time_usec,
+                :naive_datetime,
+                :naive_datetime_usec,
+                :utc_datetime,
+                :utc_datetime_usec,
+                :duration
+              ],
+         do: 1
+
+    defp alignment_group_for_type(type) when type in [:integer, :id, :serial, :date], do: 2
+
+    defp alignment_group_for_type(:smallint), do: 3
+
+    defp alignment_group_for_type(_type), do: 4
 
     defp pk_definition(columns, prefix) do
       pks =
