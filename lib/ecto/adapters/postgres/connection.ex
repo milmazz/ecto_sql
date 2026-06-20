@@ -1461,6 +1461,9 @@ if Code.ensure_loaded?(Postgrex) do
       pk_columns ++ Enum.sort_by(rest, &alignment_group/1)
     end
 
+    defp alignment_group({_action, _name, %Reference{type: type}, _opts}),
+      do: alignment_group_for_type(type)
+
     defp alignment_group({_action, _name, type, _opts}), do: alignment_group_for_type(type)
 
     defp alignment_group_for_type(type) when type in [:uuid, :binary_id], do: 0

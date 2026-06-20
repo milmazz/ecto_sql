@@ -2206,6 +2206,21 @@ defmodule Ecto.Adapters.PostgresTest do
              execute_ddl({:create, table(:posts), reordered})
   end
 
+  test "create table align_columns: :compact classifies references by their type" do
+    columns = [
+      {:add, :flag, :boolean, []},
+      {:add, :author_id, %Reference{table: :authors}, []}
+    ]
+
+    reordered = [
+      {:add, :author_id, %Reference{table: :authors}, []},
+      {:add, :flag, :boolean, []}
+    ]
+
+    assert execute_ddl({:create, table(:posts, align_columns: :compact), columns}) ==
+             execute_ddl({:create, table(:posts), reordered})
+  end
+
   test "create table with prefix" do
     create =
       {:create, table(:posts, prefix: "foo"),
