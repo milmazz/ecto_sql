@@ -1461,6 +1461,11 @@ if Code.ensure_loaded?(Postgrex) do
       pk_columns ++ Enum.sort_by(rest, &alignment_group/1)
     end
 
+    defp reorder_columns(_columns, strategy) do
+      raise ArgumentError,
+            "invalid :align_columns strategy #{inspect(strategy)}, expected nil or :compact"
+    end
+
     defp alignment_group({_action, _name, %Reference{type: type}, _opts}),
       do: alignment_group_for_type(type)
 

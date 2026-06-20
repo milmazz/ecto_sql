@@ -2221,6 +2221,14 @@ defmodule Ecto.Adapters.PostgresTest do
              execute_ddl({:create, table(:posts), reordered})
   end
 
+  test "create table with an invalid :align_columns strategy raises ArgumentError" do
+    columns = [{:add, :name, :string, []}]
+
+    assert_raise ArgumentError, ~r/align_columns/, fn ->
+      execute_ddl({:create, table(:posts, align_columns: :nope), columns})
+    end
+  end
+
   test "create table with prefix" do
     create =
       {:create, table(:posts, prefix: "foo"),
